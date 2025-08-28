@@ -18,11 +18,9 @@ class SheetService:
         sheet = self.sheet_repository.get_by_id(sheet_id)
         if not sheet:
             raise NotFoundError(f"Sheet with id {sheet_id} not found")
-        
-        # Convert columns to ColumnRequest format
+
         columns = [ColumnRequest(name=col["name"], type=col["type"]) for col in sheet.columns]
-        
-        # Convert cells to CellData format
+
         cells = []
         for cell_key, cell in sheet.cells.items():
             column_name, row_str = cell_key.split("_")
