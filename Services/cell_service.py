@@ -38,12 +38,17 @@ class CellService:
             raise ValidationError(f"Value type mismatch. Expected {expected_type.value}, got {type(value).__name__}")
         
         cell_key = f"{column}_{row}"
-        sheet.cells[cell_key] = Cell(value=value)
-    
+        existing_dependents = []
+        if cell_key in sheet.cells:
+            existing_dependents = sheet.cells[cell_key].dependents.copy()
+
+        sheet.cells[cell_key] = Cell(value=value, dependents=existing_dependents)
+
     def _set_lookup_cell(self, sheet, column: str, row: int, value: str, column_def: dict):
         lookup_column, lookup_row = self._parse_lookup_string(value)
         lookup_column_def = self._get_column_definition(sheet, lookup_column)
         self._validate_lookup_types(lookup_column_def, column_def, lookup_column, column)
+        self._check_for_cycles(sheet, column, row, lookup_column, lookup_row)
 
         cell_key = f"{column}_{row}"
         sheet.cells[cell_key] = Cell(
@@ -68,6 +73,59 @@ class CellService:
         target_key = f"{lookup_column}_{lookup_row}"
         if target_key in sheet.cells:
             sheet.cells[target_key].dependents.append((dependent_column, dependent_row))
+    
+    def _check_for_cycles(self, sheet, column: str, row: int, lookup_column: str, lookup_row: int):
+        cycle_size = self._find_cycle_size(sheet, (lookup_column, lookup_row), (column, row))
+        if cycle_size > 0:
+            raise ValidationError(f"cycle of size {cycle_size} - not allowed")
+    
+    def _find_cycle_size(self, sheet, start: tuple, target: tuple) -> int:
+        """Find cycle size using DFS. Returns 0 if no cycle found."""
+        visited = set()
+        path = []
+        return self._dfs_cycle(sheet, start, target, visited, path)
+    
+    def _dfs_cycle(self, sheet, current: tuple, target: tuple, visited: set, path: list) -> int:
+        """DFS helper to detect cycles."""
+        if current == target:
+            return len(path) + 1
+        
+        if current in visited:
+            return 0
+        
+        visited.add(current)
+        path.append(current)
+
+        current_col, current_row = current
+        cell_key = f"{current_col}_{current_row}"
+        
+        if cell_key in sheet.cells:
+            cell = sheet.cells[cell_key]
+            if cell.is_lookup and cell.lookup_column and cell.lookup_row:
+                next_cell = (cell.lookup_column, int(cell.lookup_row))
+                cycle_size = self._dfs_cycle(sheet, next_cell, target, visited, path)
+                if cycle_size > 0:
+                    return cycle_size
+        
+        path.pop()
+        return 0
+    
+    def _resolve_cell_value(self, sheet, column: str, row: int) -> Any:
+        """Resolve the actual value of a cell, following lookup chains."""
+        cell_key = f"{column}_{row}"
+        
+        if cell_key not in sheet.cells:
+            return None
+        
+        cell = sheet.cells[cell_key]
+        
+        if not cell.is_lookup:
+            return cell.value
+        
+        if cell.lookup_column and cell.lookup_row:
+            return self._resolve_cell_value(sheet, cell.lookup_column, int(cell.lookup_row))
+        
+        return None
     
     def _parse_lookup_string(self, value: str) -> Optional[Tuple[str, int]]:
         if not isinstance(value, str):
