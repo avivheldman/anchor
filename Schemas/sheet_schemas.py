@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator
-from typing import List
+from typing import List, Any, Union
 from Models.sheet import ColumnType
 
 class ColumnRequest(BaseModel):

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class ColumnType(Enum):
     BOOLEAN ="boolean"
     INT = "int"
-    DOUBLE = "DOUBLE"
+    DOUBLE = "double"
     STRING = "string"
 
 @dataclass
