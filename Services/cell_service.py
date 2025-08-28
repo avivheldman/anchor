@@ -1,6 +1,7 @@
 from typing import Any
 from Repository.sheet_repository import SheetRepository
 from Models.sheet import ColumnType, Cell
+from exceptions import NotFoundError, ValidationError
 
 class CellService:
     def __init__(self, sheet_repository: SheetRepository):
@@ -11,7 +12,7 @@ class CellService:
         print(self.sheet_repository._sheets)
         print(sheet)
         if not sheet:
-            raise ValueError(f"Sheet with id {sheet_id} not found")
+            raise NotFoundError(f"Sheet with id {sheet_id} not found")
 
         column_def = None
         for col in sheet.columns:
@@ -20,12 +21,12 @@ class CellService:
                 break
         
         if not column_def:
-            raise ValueError(f"Column '{column}' not found in sheet")
+            raise NotFoundError(f"Column '{column}' not found in sheet")
         
         # Validate value type
         expected_type = ColumnType(column_def["type"])
         if not self._validate_value_type(value, expected_type):
-            raise ValueError(f"Value type mismatch. Expected {expected_type.value}, got {type(value).__name__}")
+            raise ValidationError(f"Value type mismatch. Expected {expected_type.value}, got {type(value).__name__}")
 
         # Set the cell value
         cell_key = f"{column}_{row}"

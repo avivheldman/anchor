@@ -3,6 +3,7 @@ from Schemas.cell_schemas import SetCellRequest, SetCellResponse
 from Services.cell_service import CellService
 from Repository.sheet_repository import SheetRepository
 from dependencies import get_sheet_repository
+from exceptions import NotFoundError, ValidationError
 
 router = APIRouter(prefix="/cells", tags=["cells"])
 
@@ -26,7 +27,9 @@ def set_cell(
         
         return SetCellResponse(message=message)
     
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

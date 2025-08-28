@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
-from Schemas.sheet_schemas import CreateSheetRequest, CreateSheetResponse
+from Schemas.sheet_schemas import CreateSheetRequest, CreateSheetResponse, GetSheetResponse
 from Services.sheet_service import SheetService
 from Repository.sheet_repository import SheetRepository
 from dependencies import get_sheet_repository
+from exceptions import NotFoundError, ValidationError
 
 router = APIRouter(prefix="/sheets", tags=["sheets"])
 
@@ -27,5 +28,19 @@ def create_sheet(
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{sheet_id}", response_model=GetSheetResponse)
+def get_sheet(
+        sheet_id: str,
+        sheet_service: SheetService = Depends(get_sheet_service)
+):
+    try:
+        return sheet_service.get_sheet_by_id(sheet_id)
+    
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

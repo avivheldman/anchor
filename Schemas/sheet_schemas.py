@@ -1,6 +1,7 @@
 from pydantic import BaseModel, field_validator
 from typing import List, Any, Union
 from Models.sheet import ColumnType
+from Schemas.cell_schemas import CellData
 
 class ColumnRequest(BaseModel):
     name: str
@@ -17,6 +18,12 @@ class ColumnRequest(BaseModel):
 class CreateSheetRequest(BaseModel):
     columns: List[ColumnRequest]
 
-class CreateSheetResponse(BaseModel):
+class SheetBase(BaseModel):
     sheet_id: str
+
+class CreateSheetResponse(SheetBase):
     message: str
+
+class GetSheetResponse(SheetBase):
+    columns: List[ColumnRequest]
+    cells: List[CellData]
