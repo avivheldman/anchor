@@ -5,12 +5,10 @@ from Models.sheet import Sheet, Cell
 
 class TestCell:
     def test_cell_post_init_creates_empty_dependents_when_none(self):
-        """Test the actual logic in __post_init__"""
         cell = Cell(value="test", dependents=None)
         assert cell.dependents == []
 
     def test_cell_post_init_preserves_existing_dependents(self):
-        """Test __post_init__ doesn't overwrite existing dependents"""
         existing_deps = [("A", "1"), ("B", "2")]
         cell = Cell(value="test", dependents=existing_deps)
         assert cell.dependents == existing_deps
