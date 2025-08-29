@@ -213,11 +213,8 @@ class TestCellService:
             {"name": "B", "type": "string"},
             {"name": "C", "type": "string"}
         ])
-        
-        # A1 has the actual value
+
         mock_sheet.cells["A_1"] = Cell(value="final_value")
-        
-        # B1 looks up A1
         mock_sheet.cells["B_1"] = Cell(
             value="lookup(A,1)",
             is_lookup=True,
